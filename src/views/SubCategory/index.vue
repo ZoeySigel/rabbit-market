@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCategoryFilterAPI, getSubCategoryAPI } from '@/apis/category'
 
@@ -13,6 +13,7 @@ const reqData = ref({
   sortField: 'publishTime',
 })
 const goodList = ref([])
+const total = ref(0)
 
 const tabChange = () => {
   reqData.value.sortField = activeName.value
@@ -27,11 +28,32 @@ const getFilterData = async () => {
 const getGoodList = async () => {
   const res = await getSubCategoryAPI(reqData.value)
   goodList.value = res.result.items
+  total.value = res.result.counts
 }
-onMounted(() => {
+const pageChange = (page) => {
+  reqData.value.page = page
+  getGoodList()
+}
+const initData = () => {
+  reqData.value.categoryId = route.params.id
+  reqData.value.page = 1
+  activeName.value = 'publishTime'
+  reqData.value.sortField = 'publishTime'
+
   getFilterData()
   getGoodList()
+}
+
+onMounted(() => {
+  initData()
 })
+
+watch(
+  () => route.params.id,
+  () => {
+    initData()
+  },
+)
 </script>
 
 <template>
@@ -64,6 +86,17 @@ onMounted(() => {
         <p class="price">&yen;{{ item.price }}</p>
       </RouterLink>
     </div>
+
+    <div class="pagination-container">
+      <el-pagination
+        background
+        layout="prev, pager, next"
+        :total="total"
+        :page-size="reqData.pageSize"
+        :current-page="reqData.page"
+        @current-change="pageChange"
+      />
+    </div>
   </div>
 </template>
 
@@ -83,6 +116,11 @@ onMounted(() => {
     padding: 0 10px;
     min-height: 300px;
     color: #999;
+  }
+  .pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
   }
 
   .goods-item {
