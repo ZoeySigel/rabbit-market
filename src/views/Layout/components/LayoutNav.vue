@@ -1,7 +1,7 @@
 <script setup>
 import { useUserStore } from '@/stores/user'
 const userStore = useUserStore()
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 const router = useRouter()
 const confirm = () => {
   userStore.clearUserInfo()
@@ -33,7 +33,9 @@ const confirm = () => {
           </li>
         </template>
         <template v-else>
-          <li><a href="javascript:;">请先登录</a></li>
+          <RouterLink to="/login">
+            <li><a href="javascript:;">请先登录</a></li>
+          </RouterLink>
           <li><a href="javascript:;">帮助中心</a></li>
           <li><a href="javascript:;">关于我们</a></li>
         </template>

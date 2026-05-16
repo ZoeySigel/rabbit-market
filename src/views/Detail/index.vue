@@ -4,13 +4,29 @@ import { onMounted, ref, watch } from 'vue'
 import { getDetailAPI } from '@/apis/detail'
 import ImageView from '@/components/ImageView/index.vue'
 import GoodsHot from './components/GoodsHot.vue'
+import { useCartStore } from '@/stores/cart'
 
 const route = useRoute()
 const goods = ref({})
+const cartStore = useCartStore()
 const getGoods = async () => {
   const res = await getDetailAPI(route.params.id)
   goods.value = res.result
   console.log(goods.value)
+}
+const addCart = () => {
+  const goodsItem = {
+    skuId: goods.value.id,
+    name: goods.value.name,
+    picture: goods.value.mainPictures[0],
+    price: goods.value.price,
+    count: 1,
+    attrsText: '',
+    selected: true,
+  }
+
+  cartStore.addCart(goodsItem)
+  console.log(cartStore.cartList)
 }
 
 onMounted(() => {
@@ -65,7 +81,7 @@ watch(
             </li>
             <li>
               <p>品牌信息</p>
-              <p>{{ goods.brand.name }}</p>
+              <p>{{ goods.brand?.name || '暂无品牌' }}</p>
               <p><i class="iconfont icon-dynamic-filling"></i>品牌主页</p>
             </li>
           </ul>
@@ -95,6 +111,7 @@ watch(
           </div>
         </div>
       </div>
+      <el-button size="large" type="primary" @click="addCart"> 加入购物车 </el-button>
 
       <!-- 商品详情 -->
       <div class="goods-footer">
