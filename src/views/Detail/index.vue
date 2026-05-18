@@ -5,6 +5,7 @@ import { getDetailAPI } from '@/apis/detail'
 import ImageView from '@/components/ImageView/index.vue'
 import GoodsHot from './components/GoodsHot.vue'
 import { useCartStore } from '@/stores/cart'
+import { insertCartAPI, findNewCartListAPI } from '@/apis/cart'
 
 const route = useRoute()
 const goods = ref({})
@@ -14,21 +15,46 @@ const getGoods = async () => {
   goods.value = res.result
   console.log(goods.value)
 }
-const addCart = () => {
-  const goodsItem = {
-    skuId: goods.value.id,
-    name: goods.value.name,
-    picture: goods.value.mainPictures[0],
-    price: goods.value.price,
-    count: 1,
-    attrsText: '',
-    selected: true,
+console.log('所有 skus：', goods.value.skus)
+const addCart = async () => {
+  try {
+    const validSku = goods.value.skus.find((item) => item.inventory > 0)
+
+    if (!validSku) {
+      console.log('当前商品没有可购买库存')
+      return
+    }
+
+    const skuId = validSku.id
+    const count = 1
+
+    const res = await insertCartAPI({
+      skuId,
+      count,
+    })
+
+    console.log('加入后端购物车结果：', res)
+
+    const cartRes = await findNewCartListAPI()
+    console.log('后端购物车列表：', cartRes)
+
+    const goodsItem = {
+      skuId,
+      name: goods.value.name,
+      picture: goods.value.mainPictures[0],
+      price: goods.value.price,
+      count,
+      attrsText: '',
+      selected: true,
+    }
+
+    cartStore.addCart(goodsItem)
+    console.log(cartStore.cartList)
+  } catch (error) {
+    console.log('加入购物车失败：', error)
+    console.log('后端返回：', error.response?.data)
   }
-
-  cartStore.addCart(goodsItem)
-  console.log(cartStore.cartList)
 }
-
 onMounted(() => {
   getGoods()
 })
