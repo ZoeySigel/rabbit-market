@@ -1,6 +1,7 @@
 <script setup>
-import { getCheckoutInfoAPI } from '@/apis/checkout'
+import { getCheckoutInfoAPI, createOrderAPI } from '@/apis/checkout'
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 const checkInfo = ref({
   goods: [],
@@ -13,13 +14,27 @@ const checkInfo = ref({
   },
 })
 const curAddress = ref(null)
+const activeAddress = ref(null)
+const router = useRouter()
 
+const switchAddress = (item) => {
+  activeAddress.value = item
+}
+
+const confirmAddress = () => {
+  if (!activeAddress.value) {
+    return
+  }
+  curAddress.value = activeAddress.value
+  showDialog = false
+}
+const openAddressDialog = () => {
+  activeAddress.value = curAddress.value
+  showDialog.value = true
+}
 const getCheckoutInfo = async () => {
   try {
     const res = await getCheckoutInfoAPI()
-
-    console.log('结算接口完整返回：', res)
-    console.log('结算商品列表：', res.result.goods)
 
     checkInfo.value = res.result
     curAddress.value = res.result.userAddresses[0]
@@ -31,6 +46,37 @@ const getCheckoutInfo = async () => {
 onMounted(() => {
   getCheckoutInfo()
 })
+const createOrder = async () => {
+  if (!curAddress.value) {
+    return
+  }
+  if (checkInfo.value.goods.length === 0) {
+    return
+  }
+  const orderParams = {
+    deliveryTimeType: 1,
+    payType: 1,
+    payChannel: 1,
+    buyerMessage: '',
+    goods: checkInfo.value.goods.map((item) => {
+      return {
+        skuId: item.skuId,
+        count: item.count,
+      }
+    }),
+    addressId: curAddress.value.id,
+  }
+
+  const res = await createOrderAPI(orderParams)
+
+  const orderId = res.result.id
+  router.push({
+    path: '/pay',
+    query: {
+      id: orderId,
+    },
+  })
+}
 const showDialog = ref(false)
 </script>
 
@@ -51,7 +97,7 @@ const showDialog = ref(false)
               </ul>
             </div>
             <div class="action">
-              <el-button size="large" @click="showDialog = true">切换地址</el-button>
+              <el-button size="large" @click="openAddressDialog">切换地址</el-button>
               <el-button size="large">添加地址</el-button>
             </div>
           </div>
@@ -129,14 +175,20 @@ const showDialog = ref(false)
       </div>
       <!-- 提交订单 -->
       <div class="submit">
-        <el-button type="primary" size="large">提交订单</el-button>
+        <el-button type="primary" size="large" @click="createOrder">提交订单</el-button>
       </div>
     </div>
   </div>
 
   <el-dialog v-model="showDialog" title="切换收货地址" width="30%" center>
     <div class="addressWrapper">
-      <div class="text item" v-for="item in checkInfo.userAddresses" :key="item.id">
+      <div
+        class="text item"
+        :class="{ active: activeAddress?.id === item.id }"
+        v-for="item in checkInfo.userAddresses"
+        :key="item.id"
+        @click="switchAddress(item)"
+      >
         <li><span>收货人：</span>{{ item.receiver }}</li>
         <li><span>联系方式：</span>{{ item.contact }}</li>
         <li><span>收货地址：</span>{{ item.fullLocation }} {{ item.address }}</li>
@@ -144,8 +196,8 @@ const showDialog = ref(false)
     </div>
     <template #footer>
       <span class="dialog-footer">
-        <el-button>取消</el-button>
-        <el-button type="primary">确定</el-button>
+        <el-button @click="showDialog = false">取消</el-button>
+        <el-button type="primary" @click="confirmAddress">确定</el-button>
       </span>
     </template>
   </el-dialog>
@@ -154,10 +206,6 @@ const showDialog = ref(false)
 <style scoped lang="scss">
 .xtx-pay-checkout-page {
   margin-top: 20px;
-  .addressWrapper {
-    max-height: 500px;
-    overflow-y: auto;
-  }
 
   .text {
     flex: 1;
@@ -167,6 +215,7 @@ const showDialog = ref(false)
 
     &.item {
       border: 1px solid #f5f5f5;
+
       margin-bottom: 10px;
       cursor: pointer;
 
@@ -195,6 +244,7 @@ const showDialog = ref(false)
     &.active,
     &:hover {
       border-color: $xtxColor;
+      background: lighten($xtxColor, 50%);
     }
   }
 
@@ -327,5 +377,36 @@ const showDialog = ref(false)
     width: 420px;
     text-align: center;
   }
+}
+.addressWrapper .text.item {
+  border: 1px solid #e4e4e4;
+  margin-bottom: 10px;
+  cursor: pointer;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+}
+
+.addressWrapper .text.item.active,
+.addressWrapper .text.item:hover {
+  border-color: $xtxColor;
+  background: lighten($xtxColor, 50%);
+}
+
+.addressWrapper .text.item ul {
+  padding: 10px;
+  font-size: 14px;
+  line-height: 30px;
+  list-style: none;
+  margin: 0;
+}
+.addressWrapper .text.item ul {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+}
+
+.addressWrapper .text.item li {
+  list-style: none;
 }
 </style>

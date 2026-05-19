@@ -13,15 +13,13 @@ const cartStore = useCartStore()
 const getGoods = async () => {
   const res = await getDetailAPI(route.params.id)
   goods.value = res.result
-  console.log(goods.value)
 }
-console.log('所有 skus：', goods.value.skus)
+
 const addCart = async () => {
   try {
     const validSku = goods.value.skus.find((item) => item.inventory > 0)
 
     if (!validSku) {
-      console.log('当前商品没有可购买库存')
       return
     }
 
@@ -33,10 +31,7 @@ const addCart = async () => {
       count,
     })
 
-    console.log('加入后端购物车结果：', res)
-
     const cartRes = await findNewCartListAPI()
-    console.log('后端购物车列表：', cartRes)
 
     const goodsItem = {
       skuId,
@@ -49,7 +44,6 @@ const addCart = async () => {
     }
 
     cartStore.addCart(goodsItem)
-    console.log(cartStore.cartList)
   } catch (error) {
     console.log('加入购物车失败：', error)
     console.log('后端返回：', error.response?.data)
