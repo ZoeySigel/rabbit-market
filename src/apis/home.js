@@ -27,3 +27,13 @@ export function getGoodsAPI() {
     url: '/home/goods',
   })
 }
+
+export function getLikeListAPI(params = {}) {
+  const { limit = 4 } = params
+  return http({
+    url: '/goods/relevant',
+    params: {
+      limit,
+    },
+  })
+}

@@ -3,7 +3,7 @@ import { useUserStore } from '@/stores/user'
 
 const http = axios.create({
   baseURL: 'http://pcapi-xiaotuxian-front-devtest.itheima.net',
-  timeout: 5000,
+  timeout: 205000,
 })
 
 http.interceptors.request.use(
