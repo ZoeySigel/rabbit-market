@@ -6,6 +6,7 @@ import ImageView from '@/components/ImageView/index.vue'
 import GoodsHot from './components/GoodsHot.vue'
 import { useCartStore } from '@/stores/cart'
 import { insertCartAPI, findNewCartListAPI } from '@/apis/cart'
+import XtxSku from './components/XtxSku.vue'
 
 const route = useRoute()
 const goods = ref({})
@@ -129,6 +130,7 @@ watch(
               </dd>
             </dl>
           </div>
+          <XtxSku :goods="goods" />
         </div>
       </div>
       <el-button size="large" type="primary" @click="addCart"> 加入购物车 </el-button>
