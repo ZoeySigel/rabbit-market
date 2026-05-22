@@ -1,6 +1,7 @@
 <script setup>
 import { powerSet } from '@/utils/power-set'
 import { watch } from 'vue'
+const emit = defineEmits(['change'])
 let pathMap = {}
 const props = defineProps({
   goods: {
@@ -19,6 +20,24 @@ const changeSku = (item, val) => {
     val.selected = true
   }
   updateDisabledState(props.goods.specs, pathMap)
+  const selectedValues = getSelectedValues(props.goods.specs)
+
+  if (selectedValues.includes(undefined)) {
+    emit('change', null)
+    return
+  }
+
+  const key = selectedValues.join('*')
+  const skuIds = pathMap[key]
+  const skuObj = props.goods.skus.find((sku) => sku.id === skuIds[0])
+
+  emit('change', {
+    skuId: skuObj.id,
+    price: skuObj.price,
+    oldPrice: skuObj.oldPrice,
+    inventory: skuObj.inventory,
+    specsText: skuObj.specs.map((spec) => `${spec.name}：${spec.valueName}`).join(' '),
+  })
 }
 const getPathMap = (goods) => {
   const pathMap = {}

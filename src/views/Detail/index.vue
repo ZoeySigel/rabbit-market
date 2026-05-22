@@ -8,6 +8,12 @@ import { useCartStore } from '@/stores/cart'
 import { insertCartAPI, findNewCartListAPI } from '@/apis/cart'
 import XtxSku from './components/XtxSku.vue'
 
+const selectedSku = ref(null)
+
+const onSkuChange = (sku) => {
+  selectedSku.value = sku
+}
+
 const route = useRoute()
 const goods = ref({})
 const cartStore = useCartStore()
@@ -17,34 +23,33 @@ const getGoods = async () => {
 }
 
 const addCart = async () => {
+  if (!selectedSku.value) {
+    ElMessage.warning('请选择完整的商品规格')
+    return
+  }
+
   try {
-    const validSku = goods.value.skus.find((item) => item.inventory > 0)
-
-    if (!validSku) {
-      return
-    }
-
-    const skuId = validSku.id
+    const skuId = selectedSku.value.skuId
     const count = 1
 
-    const res = await insertCartAPI({
+    await insertCartAPI({
       skuId,
       count,
     })
-
-    const cartRes = await findNewCartListAPI()
 
     const goodsItem = {
       skuId,
       name: goods.value.name,
       picture: goods.value.mainPictures[0],
-      price: goods.value.price,
+      price: selectedSku.value.price,
       count,
-      attrsText: '',
+      attrsText: selectedSku.value.specsText,
       selected: true,
     }
 
     cartStore.addCart(goodsItem)
+
+    ElMessage.success('加入购物车成功')
   } catch (error) {
     console.log('加入购物车失败：', error)
     console.log('后端返回：', error.response?.data)
@@ -130,7 +135,7 @@ watch(
               </dd>
             </dl>
           </div>
-          <XtxSku :goods="goods" />
+          <XtxSku :goods="goods" @change="onSkuChange" />
         </div>
       </div>
       <el-button size="large" type="primary" @click="addCart"> 加入购物车 </el-button>
